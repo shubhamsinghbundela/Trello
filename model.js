@@ -17,8 +17,17 @@ const userSchema = new mongoose.Schema({
     password: "String"
 })
 
+const orgSchema = new mongoose.Schema({
+    orgName: "String",
+    description: "String",
+    admin: mongoose.Types.ObjectId, 
+    member: [mongoose.Types.ObjectId]
+})
+
 const userModel = mongoose.model("users", userSchema);
+const orgModel = mongoose.model("organisations", orgSchema);
 
 module.exports = {
-    userModel: userModel
+    userModel,
+    orgModel
 }
