@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken')
-const {userModel, orgModel} = require('./model');
+const {userModel, orgModel, boardModel} = require('./model');
 
 const {authmiddleware} = require('./middleware')
 
@@ -81,6 +81,100 @@ app.post("/create-organisation", authmiddleware, async (req,res)=>{
     
     res.status(200).json({
         orgId: newOrg.id
+    })
+})
+
+app.post('/add-member-to-organisation', authmiddleware, async (req,res)=>{
+    const newMember = req.body.member;
+    const newMemberUserId = await userModel.findOne({
+        username: newMember
+    })
+
+    if(!newMemberUserId){
+        res.status(404).json({
+            message: "user not exist"
+        })
+    }
+
+    const orgDetails = await orgModel.findOne({
+        admin: req.userId
+    })
+
+    if(!orgDetails){
+        res.status(404).json({
+            message: "org not exits"
+        })
+    }
+
+    const memberExistsInOrg = orgDetails?.member.includes(newMemberUserId._id);
+    if(memberExistsInOrg){
+        res.status(404).json({
+            message: "Member already exists in org"
+        })
+    }
+
+    orgDetails.member.push(newMemberUserId);
+
+    await orgDetails.save()
+
+    res.status(200).json({
+        message: "Member added"
+    })
+})
+
+app.delete('/delete-member-from-organisation', authmiddleware, async (req, res)=>{
+    const deleteUser = req.body.username;
+
+    const deleteUserId = await userModel.findOne({
+        username: deleteUser
+    })
+
+    if(!deleteUserId){
+        res.status(404).json({
+            message: "user not exist"
+        })
+    }
+
+    const orgDetails = await orgModel.findOne({
+        admin: req.userId
+    })
+
+    if(!orgDetails){
+        res.status(404).json({
+            message: "org not exits"
+        })
+    }
+
+    orgDetails.member = orgDetails?.member.filter(e => e.toString() !== deleteUserId._id.toString());
+
+    await orgDetails.save()
+
+    res.status(200).json({
+        message: "Member deleted"
+    })
+})
+
+app.post("/create-board", authmiddleware, async (req,res)=>{
+    const boardName = req.body.boardName;
+
+    const orgDetails = await orgModel.findOne({
+        admin: req.userId
+    });
+
+    if(!orgDetails){
+        res.status(404).json({
+            message: "Organisation not exits"
+        })
+    }
+
+    const newBoard = await boardModel.create({
+        boardName,
+        organisationId: orgDetails._id
+    })
+
+    res.status(200).json({
+        boardId: newBoard._id,
+        message: "board get created"
     })
 })
 

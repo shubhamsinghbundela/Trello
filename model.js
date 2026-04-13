@@ -24,10 +24,16 @@ const orgSchema = new mongoose.Schema({
     member: [mongoose.Types.ObjectId]
 })
 
+const boardSchema = new mongoose.Schema({
+    boardName: "String",
+    organisationId: mongoose.Types.ObjectId
+})
+
 const userModel = mongoose.model("users", userSchema);
 const orgModel = mongoose.model("organisations", orgSchema);
-
+const boardModel = mongoose.model("boards", boardSchema);
 module.exports = {
     userModel,
-    orgModel
+    orgModel,
+    boardModel
 }
