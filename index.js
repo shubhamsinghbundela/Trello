@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken')
-const {userModel, orgModel, boardModel} = require('./model');
+const {userModel, orgModel, boardModel, taskModel} = require('./model');
 
 const {authmiddleware} = require('./middleware')
 
@@ -175,6 +175,55 @@ app.post("/create-board", authmiddleware, async (req,res)=>{
     res.status(200).json({
         boardId: newBoard._id,
         message: "board get created"
+    })
+})
+
+app.post("/create-task", authmiddleware, async(req,res)=>{
+    const taskDescription = req.body.description;
+    const taskStatus = req.body.status;
+
+    const taskExists = await taskModel.findOne({
+        userId: req.userId,
+        description: taskDescription
+    })
+
+    if(taskExists){
+        return res.status(403).json({
+            message: "task already exists"
+        })
+    }
+
+    const newTask = await taskModel.create({
+        userId: req.userId,
+        description: taskDescription,
+        status: taskStatus
+    })
+
+    res.status(200).json({
+        message: "task created"
+    })
+})
+
+app.post("/update-task", authmiddleware, async (req,res)=>{
+    const taskStatus = req.body.status;
+    const taskDescription = req.body.description;
+
+    const taskExist = await taskModel.findOne({
+        userId: req.userId,
+        description: taskDescription
+    })
+
+    if(!taskExist){
+        return res.status(404).json({
+            message: "task not exist"
+        })
+    }
+
+    taskExist.status = taskStatus;
+    taskExist.save();
+
+    res.status(200).json({
+        message: "task updated"
     })
 })
 

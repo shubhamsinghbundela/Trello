@@ -29,11 +29,19 @@ const boardSchema = new mongoose.Schema({
     organisationId: mongoose.Types.ObjectId
 })
 
+const taskSchema = new mongoose.Schema({
+    description: "String",
+    status: "String",
+    userId: mongoose.Types.ObjectId
+})
+
 const userModel = mongoose.model("users", userSchema);
 const orgModel = mongoose.model("organisations", orgSchema);
 const boardModel = mongoose.model("boards", boardSchema);
+const taskModel = mongoose.model("tasks", taskSchema);
 module.exports = {
     userModel,
     orgModel,
-    boardModel
+    boardModel,
+    taskModel
 }
