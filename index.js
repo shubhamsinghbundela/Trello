@@ -227,6 +227,27 @@ app.post("/update-task", authmiddleware, async (req,res)=>{
     })
 })
 
+app.delete("/delete-task", authmiddleware, async(req,res)=>{
+    const taskDescription = req.body.description;
+
+    const taskExists = await taskModel.findOne({
+        description: taskDescription,
+        userId: req.userId
+    })
+
+    if(!taskExists){
+        return res.status(404).json({
+            message: "task not exist"
+        })
+    }
+
+    await taskModel.deleteOne({ _id: taskExists._id });
+
+    res.status(200).json({
+        message: "task deleted successfully"
+    })
+})
+
 app.listen(3000, ()=>{
     console.log('Server started')
 })
