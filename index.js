@@ -178,75 +178,103 @@ app.post("/create-board", authmiddleware, async (req,res)=>{
     })
 })
 
-app.post("/create-task", authmiddleware, async(req,res)=>{
-    const taskDescription = req.body.description;
-    const taskStatus = req.body.status;
+app.post("/create-task", authMiddleware, async (req, res) => {
+    const { description, status, boardId } = req.body;
+ 
+    if (!description || !status || !boardId) {
+        return res.status(400).json({
+            message: "All fields are required"
+        });
+    }
+
+    const allowedStatus = ["Todo", "In Progress", "Done"];
+    if (!allowedStatus.includes(status)) {
+        return res.status(400).json({
+            message: "Invalid status"
+        });
+    }
+ 
+    const board = await boardModel.findById(boardId);
+    if (!board) {
+        return res.status(404).json({
+            message: "Board not found"
+        });
+    }
 
     const taskExists = await taskModel.findOne({
         userId: req.userId,
-        description: taskDescription
-    })
+        description,
+        boardId
+    });
 
-    if(taskExists){
+    if (taskExists) {
         return res.status(403).json({
-            message: "task already exists"
-        })
+            message: "Task already exists in this board"
+        });
     }
 
     const newTask = await taskModel.create({
         userId: req.userId,
-        description: taskDescription,
-        status: taskStatus
-    })
+        description,
+        status,
+        boardId
+    });
 
     res.status(200).json({
-        message: "task created"
-    })
-})
+        message: "Task created successfully",
+        taskId: newTask._id
+    });
+});
 
-app.post("/update-task", authmiddleware, async (req,res)=>{
-    const taskStatus = req.body.status;
-    const taskDescription = req.body.description;
+app.put("/update-task", authMiddleware, async (req, res) => {
+    const { taskId, status } = req.body;
 
-    const taskExist = await taskModel.findOne({
-        userId: req.userId,
-        description: taskDescription
-    })
-
-    if(!taskExist){
-        return res.status(404).json({
-            message: "task not exist"
-        })
+    const allowedStatus = ["Todo", "In Progress", "Done"];
+    if (!allowedStatus.includes(status)) {
+        return res.status(400).json({
+            message: "Invalid status"
+        });
     }
 
-    taskExist.status = taskStatus;
-    taskExist.save();
-
-    res.status(200).json({
-        message: "task updated"
-    })
-})
-
-app.delete("/delete-task", authmiddleware, async(req,res)=>{
-    const taskDescription = req.body.description;
-
-    const taskExists = await taskModel.findOne({
-        description: taskDescription,
+    const task = await taskModel.findOne({
+        _id: taskId,
         userId: req.userId
-    })
+    });
 
-    if(!taskExists){
+    if (!task) {
         return res.status(404).json({
-            message: "task not exist"
-        })
+            message: "Task not found"
+        });
     }
 
-    await taskModel.deleteOne({ _id: taskExists._id });
+    task.status = status;
+    await task.save();
 
     res.status(200).json({
-        message: "task deleted successfully"
-    })
-})
+        message: "Task updated successfully"
+    });
+});
+
+app.delete("/delete-task", authMiddleware, async (req, res) => {
+    const { taskId } = req.body;
+
+    const task = await taskModel.findOne({
+        _id: taskId,
+        userId: req.userId
+    });
+
+    if (!task) {
+        return res.status(404).json({
+            message: "Task not found"
+        });
+    }
+
+    await taskModel.deleteOne({ _id: taskId });
+
+    res.status(200).json({
+        message: "Task deleted successfully"
+    });
+});
 
 app.listen(3000, ()=>{
     console.log('Server started')
