@@ -3,7 +3,7 @@ const dns = require("dns");
 dns.setServers(["1.1.1.1", "8.8.8.8"])
 async function connectDB() {
     try{
-        await mongoose.connect("mongodb+srv://shubham:todo1234@todo.dtrpiex.mongodb.net/trello");
+        await mongoose.connect("");
         console.log("mongoDB connected");
     }catch(err) {
         console.error("connection error:", err);
